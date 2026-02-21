@@ -7,6 +7,9 @@ class ResponseEvaluator(Evaluator):
     Evaluates LLM responses and flags potential issues.
     """
 
+    # Minimum relevance score; if all chunks are below this, treat as no useful context
+    LOW_RELEVANCE_THRESHOLD = 0.35
+
     REFUSAL_PHRASES = [
         "i cannot",
         "i don't know",
@@ -28,11 +31,21 @@ class ResponseEvaluator(Evaluator):
 
         # ==============================
         # 1️⃣ No Context Flag
+        # Zero chunks, or all chunks have very low relevance
         # ==============================
         if len(retrieved_chunks) == 0 and not any(
             phrase in answer_lower for phrase in self.REFUSAL_PHRASES
         ):
             flags.append("no_context")
+        elif len(retrieved_chunks) > 0:
+            scores = [
+                c.get("relevance_score", 0)
+                for c in retrieved_chunks
+            ]
+            if all(s < self.LOW_RELEVANCE_THRESHOLD for s in scores) and not any(
+                phrase in answer_lower for phrase in self.REFUSAL_PHRASES
+            ):
+                flags.append("no_context")
 
         # ==============================
         # 2️⃣ Refusal Flag
@@ -42,11 +55,11 @@ class ResponseEvaluator(Evaluator):
 
         # ==============================
         # 3️⃣ Custom Domain Flag
-        # Example: conflicting pricing information
+        # Pricing mentioned and multiple distinct documents → possible conflicting info
         # ==============================
         if "price" in answer_lower or "pricing" in answer_lower:
-            # If multiple sources retrieved and pricing mentioned
-            if len(retrieved_chunks) > 1:
+            distinct_docs = {c.get("document") for c in retrieved_chunks if c.get("document")}
+            if len(distinct_docs) > 1:
                 flags.append("multiple_conflicting_sources")
 
         return flags

@@ -28,8 +28,16 @@ class RuleBasedRouter(Router):
         "error",
         "problem",
         "not working",
+        "doesn't work",
+        "don't work",
         "failed",
-        "multi-step"
+        "multi-step",
+        "step by step",
+        "walk me through",
+        "complaint",
+        "unable to",
+        "can't",
+        "cannot get",
     ]
     
     def classify(self, query: str) -> Tuple[str, str]:

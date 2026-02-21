@@ -1,6 +1,5 @@
 import json
 import os
-from datetime import datetime
 
 
 class RoutingLogger:
@@ -29,21 +28,21 @@ class RoutingLogger:
         latency_ms: int
     ) -> None:
 
+        # Spec format: { query, classification, model_used, tokens_input, tokens_output, latency_ms }
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat(),
             "query": query,
             "classification": classification,
             "model_used": model_used,
             "tokens_input": tokens_input,
             "tokens_output": tokens_output,
-            "latency_ms": latency_ms
+            "latency_ms": latency_ms,
         }
 
         # Read existing logs
         with open(self.log_file, "r") as f:
             logs = json.load(f)
 
-        # Append new entry
+        # Append new entry (exactly the 6 fields per spec)
         logs.append(log_entry)
 
         # Write back

@@ -2,6 +2,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from models import QueryRequest, QueryResponse
 from config import Config
 
@@ -10,6 +11,7 @@ DOCS_PATH = Path(__file__).resolve().parent.parent / "clearpath_docs"
 
 # Services
 from services.cache_service import CacheService
+from services.conversation_store import ConversationStore
 from services.query_service import QueryService
 
 # Router
@@ -53,12 +55,12 @@ if not Config.GROQ_API_KEY:
     )
 
 cache_service = CacheService()
+conversation_store = ConversationStore()
 router = RuleBasedRouter()
 retriever = RetrievalService(docs_path=str(DOCS_PATH))
 llm_service = GroqLLMService(api_key=Config.GROQ_API_KEY)
 evaluator = ResponseEvaluator()
 logger = RoutingLogger()
-
 
 query_service = QueryService(
     router=router,
@@ -66,7 +68,8 @@ query_service = QueryService(
     llm=llm_service,
     evaluator=evaluator,
     cache=cache_service,
-    logger=logger
+    conversation_store=conversation_store,
+    logger=logger,
 )
 
 
@@ -77,6 +80,15 @@ query_service = QueryService(
 @app.post("/query", response_model=QueryResponse)
 def query_endpoint(request: QueryRequest):
     return query_service.handle_query(request)
+
+
+@app.post("/query/stream")
+def query_stream_endpoint(request: QueryRequest):
+    return StreamingResponse(
+        query_service.handle_query_stream(request),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 if __name__ == "__main__":

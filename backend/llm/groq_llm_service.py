@@ -1,9 +1,33 @@
 import time
-from typing import Tuple
+from typing import Iterator, List, Tuple
 
 from groq import Groq
 
 from llm.llm_interface import LLMService
+
+
+def _build_messages(
+    system_msg: str,
+    context: str,
+    question: str,
+    history: List[dict] | None,
+) -> List[dict]:
+    """Build messages list: system, optional history, then current user prompt."""
+    prompt = f"""Context (from ClearPath documentation):
+---
+{context}
+---
+
+User question:
+{question}
+
+Your answer:"""
+    messages = [{"role": "system", "content": system_msg}]
+    if history:
+        for m in history:
+            messages.append({"role": m["role"], "content": m["content"]})
+    messages.append({"role": "user", "content": prompt})
+    return messages
 
 
 class GroqLLMService(LLMService):
@@ -19,63 +43,22 @@ class GroqLLMService(LLMService):
         model: str,
         context: str,
         question: str,
-        classification: str = "simple"
+        classification: str = "simple",
+        history: List[dict] | None = None,
     ) -> Tuple[str, int, int]:
         """
-        Calls Groq LLM with RAG context and question.
-
-        Returns:
-            answer (str),
-            input_tokens (int),
-            output_tokens (int)
+        Calls Groq LLM with RAG context and question. Optional history for conversation memory.
         """
-
-        start_time = time.time()
-
         if classification == "complex":
-            prompt = f"""You are a customer support assistant for ClearPath, a project management SaaS tool.
-
-Instructions:
-- The user has asked a question that may have multiple parts or need a detailed answer. Explain in detail what they asked, addressing each part clearly.
-- Use ONLY the context below. Do not use external knowledge.
-- If something is not in the context, say so clearly and suggest they contact support.
-- Structure your answer so it is easy to follow (e.g. use short paragraphs or bullet points per sub-question). Cite document names when relevant.
-
-Context (from ClearPath documentation):
----
-{context}
----
-
-User question:
-{question}
-
-Your detailed answer:"""
-            system_msg = "You are the ClearPath support assistant. For this query, provide a clear, detailed explanation that addresses everything the user asked. Answer only from the given documentation."
+            system_msg = "You are the ClearPath support assistant. For this query, provide a clear, detailed explanation that addresses everything the user asked. Answer only from the given documentation. If the user refers to earlier messages, use the conversation history for context but still base answers on the documentation context provided."
         else:
-            prompt = f"""You are a customer support assistant for ClearPath, a project management SaaS tool. Be concise, accurate, and professional.
+            system_msg = "You are the ClearPath support assistant. Answer only from the given documentation. If information is missing, say so clearly. You may use conversation history for context when the user refers to earlier messages."
 
-Instructions:
-- Answer using ONLY the context below. Do not use external knowledge.
-- If the answer is not in the context, respond clearly that you cannot find it in the documentation and suggest the user contact support.
-- Cite document names when relevant. Do not invent or assume details.
-
-Context (from ClearPath documentation):
----
-{context}
----
-
-User question:
-{question}
-
-Your answer:"""
-            system_msg = "You are the ClearPath support assistant. Answer only from the given documentation. If information is missing, say so clearly."
+        messages = _build_messages(system_msg, context, question, history)
 
         response = self.client.chat.completions.create(
             model=model,
-            messages=[
-                {"role": "system", "content": system_msg},
-                {"role": "user", "content": prompt}
-            ]
+            messages=messages,
         )
 
         end_time = time.time()
@@ -87,3 +70,35 @@ Your answer:"""
         output_tokens = response.usage.completion_tokens
 
         return answer, input_tokens, output_tokens
+
+    def generate_stream(
+        self,
+        model: str,
+        context: str,
+        question: str,
+        classification: str = "simple",
+        history: List[dict] | None = None,
+    ) -> Iterator[Tuple[str, int, int]]:
+        """Stream LLM response as text deltas. Final yield is ("", input_tokens, output_tokens)."""
+        if classification == "complex":
+            system_msg = "You are the ClearPath support assistant. For this query, provide a clear, detailed explanation. Answer only from the given documentation. You may use conversation history for context when the user refers to earlier messages."
+        else:
+            system_msg = "You are the ClearPath support assistant. Answer only from the given documentation. If information is missing, say so clearly. You may use conversation history for context when the user refers to earlier messages."
+        messages = _build_messages(system_msg, context, question, history)
+
+        stream = self.client.chat.completions.create(
+            model=model,
+            messages=messages,
+            stream=True,
+        )
+        input_tokens = 0
+        output_tokens = 0
+        for chunk in stream:
+            if chunk.choices and len(chunk.choices) > 0:
+                delta = chunk.choices[0].delta
+                if getattr(delta, "content", None):
+                    yield delta.content, 0, 0
+            if getattr(chunk, "usage", None):
+                input_tokens = getattr(chunk.usage, "prompt_tokens", 0) or input_tokens
+                output_tokens = getattr(chunk.usage, "completion_tokens", 0) or output_tokens
+        yield "", input_tokens, output_tokens
