@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from models import QueryRequest, QueryResponse
 from config import Config
 
@@ -32,6 +33,14 @@ from logger import RoutingLogger
 # ==============================
 
 app = FastAPI(title="ClearPath Chatbot API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 
 # ==============================
