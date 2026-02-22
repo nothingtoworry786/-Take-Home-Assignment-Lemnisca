@@ -74,7 +74,37 @@ Shipping with rule-based/keyword solutions enables fast prototyping, cost contro
 **Fix, given more time:**  
 Integrate a small transformer or bi-encoder-based semantic retriever, or at least a neural re-ranker, to better handle ambiguity and query intent. Alternatively, invest in a more sophisticated, possibly statistical, query classifier for the router.
 
-** prompts **
+---
+
+## Conversation memory
+
+**Design decisions:**
+
+- **In-memory store keyed by `conversation_id`:** No DB dependency; simple and fast for a single backend process. History is lost on restart — acceptable for a take-home/demo.
+- **Last 5 turns only:** Each “turn” is one user message + one assistant message, so we keep at most 10 messages (5 user + 5 assistant). This bounds context size and avoids unbounded growth in long chats.
+- **When to use history:** History is fetched and passed to the LLM only when the client sends a `conversation_id` (i.e. a follow-up in an existing thread). The first message in a thread has no history.
+- **Cache and memory:** When `conversation_id` is present we skip the exact-question cache, so follow-ups always get a fresh answer that can refer to prior turns.
+
+**Token cost tradeoff:**
+
+- Sending history increases **input tokens** every time (each turn adds ~2 messages to the prompt). Capping at 5 turns keeps a predictable upper bound (e.g. on the order of hundreds to low thousands of extra tokens per request).
+- Tradeoff: more turns → better coherence and “remember what I asked” vs. higher cost and slower responses. The 5-turn cap is a compromise: enough for short multi-turn threads without blowing up context.
+
+## Streaming and structured output
+
+**Where structured output parsing breaks with streaming:**
+
+- **Streaming is token-by-token:** The client (and the backend) see incremental text, not a single final blob. You can’t “parse” a JSON or other structured payload until you have a complete unit (e.g. a full JSON object).
+- **Our flow:** We stream **plain text** (the answer body) only. Metadata (model, tokens, latency, sources, `conversation_id`) is sent in a **separate final SSE event** (`type: "done"`) after the stream ends. So we never try to parse structured output from the stream itself — we only parse the `done` event, which is one complete JSON object.
+- **If we had streamed structured output:** For example, if the LLM were instructed to output JSON (e.g. `{"answer": "...", "sources": [...]`), then:
+  - **Mid-stream:** You only have a prefix (e.g. `{"answer": "The`), which is invalid JSON. You cannot reliably parse or validate until the closing `}` (and any nested content) has arrived.
+  - **Incremental parsing:** You’d need a streaming JSON parser or to buffer until a complete top-level object is received, which adds complexity and can be fragile (e.g. JSON with embedded newlines or unescaped content).
+- **Evaluator:** Our evaluator runs **after** the full answer is collected (post-stream), so it always sees the complete text. No parsing of partial output.
+
+---
+
+
+**prompts**
 
 - *"Read the backend file and update the frontend file"* — to connect the Next.js UI to the `/query` API and show answer, metadata, and sources.
 - *"Make the frontend like how I chat GPT"* — to turn the page into a chat-style UI with user/assistant bubbles, conversation history, and fixed bottom input.

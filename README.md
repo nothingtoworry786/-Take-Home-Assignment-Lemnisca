@@ -92,9 +92,10 @@ The app will be at **http://localhost:3000**. It talks to the backend at `http:/
 
 | Variable | Where | Required | Description |
 |----------|--------|----------|-------------|
-| `GROQ_API_KEY` | Project root `.env` | Yes | Your [Groq](https://console.groq.com) API key. |
-| `NEXT_PUBLIC_API_URL` | `frontend/.env.local` | No | Backend URL (default: `http://localhost:8000`). |
-| `PORT` | Backend env | No | Port for uvicorn (default: `8000`). |
+| `GROQ_API_KEY` | Project root `.env` or Render | Yes | Your [Groq](https://console.groq.com) API key. |
+| `NEXT_PUBLIC_API_URL` | `frontend/.env.local` or Vercel | No | Backend URL (default: `http://localhost:8000`). Set to your Render URL in production. |
+| `CORS_ORIGINS` | Backend env (e.g. Render) | No | Comma-separated list of allowed frontend origins (e.g. `https://your-app.vercel.app`). Localhost is allowed by default. |
+| `PORT` | Backend env | No | Port for uvicorn (default: `8000`). Render sets this automatically. |
 
 Create a `.env` file in the **project root** (same folder as `backend/` and `frontend/`):
 
@@ -168,21 +169,52 @@ Routing is rule-based (keywords, query length, number of questions). Models are 
 
 ---
 
-## Bonus challenges
+## Bonus challenges (optional)
 
-| Challenge | Status | Notes |
-|-----------|--------|--------|
-| **Conversation memory** | ✅ Done | In-memory store per `conversation_id`; last 5 turns sent to the LLM. Cache skipped when continuing a conversation. |
-| **Streaming** | ✅ Done | `POST /query/stream` returns SSE; UI consumes chunks and shows metadata in a final event. |
-| **Eval harness** | ✅ Done | `scripts/eval_cases.json` + `scripts/run_eval.py`; optional `--output` for a markdown report. |
-| **Live deploy** | ❌ Not done | Not deployed to a public URL. |
+These match the assignment’s optional bonus challenges. Which were attempted:
+
+| Challenge | Description | Attempted | Where to find it |
+|-----------|-------------|-----------|-------------------|
+| **Conversation memory** | Chatbot maintains conversation memory across turns. | ✅ Yes | `backend/services/conversation_store.py` (in-memory, last 5 turns). History passed to LLM in `llm/groq_llm_service.py`. Cache skipped when `conversation_id` is present. Design and token tradeoff: see [written_answers.md § Bonus](written_answers.md#bonus---conversation-memory-and-streaming). |
+| **Streaming** | Stream the response token-by-token. | ✅ Yes | `POST /query/stream` (SSE), `backend/llm/groq_llm_service.py` (`generate_stream`), frontend consumes in `frontend/app/page.tsx`. Where structured output parsing breaks: see [written_answers.md § Bonus](written_answers.md#bonus---conversation-memory-and-streaming). |
+| **Eval harness** | Own test queries with expected answers; run system and report pass/fail. | ✅ Yes | `scripts/eval_cases.json` (cases), `scripts/run_eval.py` (runner). Run: `python scripts/run_eval.py` or `python scripts/run_eval.py --output eval_report.md`. |
+| **Live deploy** | Deploy to a public URL (Vercel, Railway, GCP, AWS, etc.). | ✅ Planned | Backend → **Render**; frontend → **Vercel**. See [Deployment](#deployment) below. |
 
 ---
 
 ## Deployment
 
-- **Backend:** Run `uvicorn main:app --host 0.0.0.0 --port $PORT` (e.g. Railway, Render, or a cloud VM). Set `GROQ_API_KEY` in the environment. Ensure the `clearpath_docs/` folder (or equivalent path) is available; the docs path is set in `backend/main.py`.
-- **Frontend:** Run `pnpm build` and serve the output (e.g. Vercel, or static hosting). Set `NEXT_PUBLIC_API_URL` to the public backend URL so the client can reach the API.
+This project is set up to deploy **backend on Render** and **frontend on Vercel**.
+
+### Backend on Render
+
+1. **Create a Web Service** at [dashboard.render.com](https://dashboard.render.com). Connect your repo.
+2. **Build & start (no blueprint):**
+   - **Build command:** `pip install -r requirements.txt`
+   - **Start command:** `cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
+   - **Root directory:** leave blank (so `clearpath_docs/` and `backend/` are both in the build).
+3. **Environment variables:**
+   - `GROQ_API_KEY` — your Groq API key (required).
+   - `CORS_ORIGINS` — your Vercel app URL so the browser can call the API, e.g. `https://your-app.vercel.app` (optional; add multiple origins comma-separated if needed).
+4. Deploy. Note the backend URL (e.g. `https://clearpath-chatbot-api.onrender.com`).
+
+**Or use the blueprint:** If your repo has `render.yaml` at the root, you can use Render’s Blueprint to create the service from it; then set `GROQ_API_KEY` and `CORS_ORIGINS` in the dashboard.
+
+**Note:** On Render’s free tier the service may spin down after inactivity; the first request after that can be slow.
+
+### Frontend on Vercel
+
+1. **Import the project** at [vercel.com](https://vercel.com). Point it at your repo; set **Root Directory** to `frontend`.
+2. **Environment variable:**
+   - `NEXT_PUBLIC_API_URL` — your Render backend URL (e.g. `https://clearpath-chatbot-api.onrender.com`). No trailing slash.
+3. Deploy. The app will call the backend at that URL.
+
+**Build:** Vercel will run `pnpm build` (or `npm run build`) in the frontend root. No extra config needed if the repo has `frontend/package.json`.
+
+### After both are live
+
+- Open the Vercel app URL; the chat should use the Render API.
+- If you see CORS errors, add the exact Vercel URL (including `https://`) to **CORS_ORIGINS** on the Render service and redeploy the backend.
 
 ---
 
