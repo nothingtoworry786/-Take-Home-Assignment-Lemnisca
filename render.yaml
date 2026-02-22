@@ -1,0 +1,15 @@
+# Render Blueprint: backend only. Frontend → Vercel.
+# After creating from this blueprint, set GROQ_API_KEY in the service Environment.
+
+services:
+  - type: web
+    name: clearpath-chatbot-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
