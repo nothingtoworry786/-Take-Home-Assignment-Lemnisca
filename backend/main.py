@@ -89,7 +89,9 @@ def query_stream_endpoint(request: QueryRequest):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
-
+@app.get("/health")
+def health_endpoint():
+    return {"status": "ok"}
 
 if __name__ == "__main__":
     import uvicorn

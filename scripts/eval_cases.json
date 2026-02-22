@@ -1,0 +1,42 @@
+[
+  {
+    "id": "simple_greeting",
+    "query": "Hi",
+    "expected_contains": [],
+    "expected_refusal": false,
+    "note": "Greeting; answer should be friendly and mention ClearPath or docs"
+  },
+  {
+    "id": "what_is_clearpath",
+    "query": "What is ClearPath?",
+    "expected_contains": ["ClearPath", "project"],
+    "expected_refusal": false
+  },
+  {
+    "id": "pricing_lookup",
+    "query": "What is the price of the Pro plan?",
+    "expected_contains": [],
+    "expected_refusal": false,
+    "note": "May flag multiple_conflicting_sources; answer should mention pricing or docs"
+  },
+  {
+    "id": "off_topic_refusal",
+    "query": "What is the weather in Paris?",
+    "expected_contains": [],
+    "expected_refusal": true
+  },
+  {
+    "id": "how_many_plans",
+    "query": "How many plans does ClearPath offer?",
+    "expected_contains": [],
+    "expected_refusal": false,
+    "note": "Answer should reference plans or documentation"
+  },
+  {
+    "id": "complex_step_by_step",
+    "query": "Explain step by step how to create a new project.",
+    "expected_contains": [],
+    "expected_refusal": false,
+    "note": "Should route to complex model and give steps or reference docs"
+  }
+]
