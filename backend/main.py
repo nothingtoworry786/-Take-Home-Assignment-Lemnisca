@@ -7,33 +7,17 @@ from fastapi.responses import StreamingResponse
 from models import QueryRequest, QueryResponse
 from config import Config
 
-# Project root (parent of backend/) — docs path works no matter where you run from
 DOCS_PATH = Path(__file__).resolve().parent.parent / "clearpath_docs"
 
-# Services
 from services.cache_service import CacheService
 from services.conversation_store import ConversationStore
 from services.query_service import QueryService
-
-# Router
 from routing.RuleBasedRouter import RuleBasedRouter
-
-# RAG
 from rag.retrieval_service import RetrievalService
-
-# LLM
 from llm.groq_llm_service import GroqLLMService
-
-# Evaluator
 from evaluation.response_evaluator import ResponseEvaluator
-
-# Logger
 from logger import RoutingLogger
 
-
-# ==============================
-# FastAPI App
-# ==============================
 
 app = FastAPI(title="ClearPath Chatbot API")
 
@@ -46,9 +30,6 @@ app.add_middleware(
 )
 
 
-# ==============================
-# Dependency Wiring
-# ==============================
 
 if not Config.GROQ_API_KEY:
     raise ValueError(
@@ -74,9 +55,6 @@ query_service = QueryService(
 )
 
 
-# ==============================
-# API Endpoint
-# ==============================
 
 @app.post("/query", response_model=QueryResponse)
 def query_endpoint(request: QueryRequest):

@@ -15,18 +15,21 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-# Script dir: run from project root or from backend/ — cases path is relative to script
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_CASES = SCRIPT_DIR / "eval_cases.json"
 API_URL = "http://localhost:8000/query"
 REFUSAL_PHRASES = [
-    "i cannot", "i don't know", "i do not know", "not mentioned",
+    "i cannot", "i can't", "i don't know", "i do not know", "not mentioned",
     "cannot find", "not available in the documentation", "not in the documentation",
     "not in the context", "outside the documentation", "cannot assist",
     "not related to", "not covered", "contact support", "beyond the scope",
     "don't have information", "no information", "documentation doesn't",
     "not applicable", "outside my", "not part of the",
     "only answer questions about", "unrelated to clearpath", "not covered in the documentation",
+    "i'm not able", "i'm unable", "can't help", "cannot help", "not able to assist",
+    "only from the documentation", "documentation only", "clearpath only",
+    "questions about clearpath", "support assistant for clearpath",
+    "not something i can", "outside the scope of", "not within the scope",
 ]
 
 

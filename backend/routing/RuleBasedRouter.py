@@ -45,7 +45,6 @@ class RuleBasedRouter(Router):
         word_count = len(query_clean.split())
         question_marks = query_clean.count("?")
 
-        # Complex rules first (multi-question, long, or complex keywords → big model)
         if question_marks > 1:
             return "complex", Config.BIG_MODEL
         if word_count > 20:
@@ -53,7 +52,6 @@ class RuleBasedRouter(Router):
         if any(keyword in query_clean for keyword in self.COMPLEX_KEYWORDS):
             return "complex", Config.BIG_MODEL
 
-        # Simple rules (short, greetings, basic lookup → small model)
         if word_count <= 8:
             return "simple", Config.SMALL_MODEL
         if any(keyword in query_clean for keyword in self.SIMPLE_KEYWORDS):

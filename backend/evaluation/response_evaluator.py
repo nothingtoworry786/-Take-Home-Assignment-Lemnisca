@@ -29,10 +29,7 @@ class ResponseEvaluator(Evaluator):
 
         answer_lower = answer.lower()
 
-        # ==============================
-        # 1️⃣ No Context Flag
-        # Zero chunks, or all chunks have very low relevance
-        # ==============================
+
         if len(retrieved_chunks) == 0 and not any(
             phrase in answer_lower for phrase in self.REFUSAL_PHRASES
         ):
@@ -47,16 +44,10 @@ class ResponseEvaluator(Evaluator):
             ):
                 flags.append("no_context")
 
-        # ==============================
-        # 2️⃣ Refusal Flag
-        # ==============================
+
         if any(phrase in answer_lower for phrase in self.REFUSAL_PHRASES):
             flags.append("refusal")
 
-        # ==============================
-        # 3️⃣ Custom Domain Flag
-        # Pricing mentioned and multiple distinct documents → possible conflicting info
-        # ==============================
         if "price" in answer_lower or "pricing" in answer_lower:
             distinct_docs = {c.get("document") for c in retrieved_chunks if c.get("document")}
             if len(distinct_docs) > 1:

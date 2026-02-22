@@ -1,15 +1,13 @@
 import os
 from pathlib import Path
 
-# Load .env from project root (parent of backend/) if python-dotenv is installed
 _env_path = Path(__file__).resolve().parent.parent / ".env"
 if _env_path.exists():
     try:
         from dotenv import load_dotenv
         load_dotenv(_env_path)
     except ImportError:
-        pass  # GROQ_API_KEY etc. must be set in the environment
-
+        pass 
 
 class Config:
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "").strip()

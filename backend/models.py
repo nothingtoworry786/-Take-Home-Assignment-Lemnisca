@@ -17,7 +17,7 @@ class Metadata(BaseModel):
     latency_ms: int
     chunks_retrieved: int
     evaluator_flags: List[str]
-    evaluator_message: Optional[str] = None  # e.g. "Low confidence — please verify with support." when flags set
+    evaluator_message: Optional[str] = None 
     cache_hit: bool = False  
 
 class Source(BaseModel):

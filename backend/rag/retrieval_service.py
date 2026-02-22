@@ -2,7 +2,6 @@ import logging
 import os
 from typing import List, Dict
 
-# Suppress "BertModel LOAD REPORT" / "UNEXPECTED" when loading embedding model
 os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
 
 import faiss
@@ -12,7 +11,6 @@ from pypdf import PdfReader
 
 from config import Config
 
-# Suppress pypdf warnings for malformed PDFs (e.g. "incorrect startxref pointer", "parsing for Object Streams")
 for _name in ("pypdf", "pypdf._reader"):
     logging.getLogger(_name).setLevel(logging.ERROR)
 
@@ -37,9 +35,6 @@ class RetrievalService:
         self._load_documents()
         self._build_index()
 
-    # ==============================
-    # Document Loading
-    # ==============================
 
     def _load_documents(self):
         if not os.path.exists(self.docs_path):
@@ -59,9 +54,6 @@ class RetrievalService:
                             page_number=page_number
                         )
 
-    # ==============================
-    # Chunking
-    # ==============================
 
     def _chunk_text(self, text: str, document_name: str, page_number: int):
         words = text.split()
@@ -82,9 +74,6 @@ class RetrievalService:
 
             start += chunk_size - overlap
 
-    # ==============================
-    # FAISS Index Building
-    # ==============================
 
     def _build_index(self):
         if not self.chunks:
@@ -96,10 +85,6 @@ class RetrievalService:
         dimension = embeddings.shape[1]
         self.index = faiss.IndexFlatL2(dimension)
         self.index.add(embeddings)
-
-    # ==============================
-    # Retrieval
-    # ==============================
 
     def retrieve(self, query: str) -> List[Dict]:
         if self.index is None:

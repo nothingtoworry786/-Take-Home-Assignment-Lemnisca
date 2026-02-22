@@ -28,7 +28,6 @@ class RoutingLogger:
         latency_ms: int
     ) -> None:
 
-        # Spec format: { query, classification, model_used, tokens_input, tokens_output, latency_ms }
         log_entry = {
             "query": query,
             "classification": classification,
@@ -38,13 +37,14 @@ class RoutingLogger:
             "latency_ms": latency_ms,
         }
 
-        # Read existing logs
-        with open(self.log_file, "r") as f:
-            logs = json.load(f)
+        try:
+            with open(self.log_file, "r") as f:
+                content = f.read().strip()
+                logs = json.loads(content) if content else []
+        except (json.JSONDecodeError, FileNotFoundError):
+            logs = []
 
-        # Append new entry (exactly the 6 fields per spec)
         logs.append(log_entry)
 
-        # Write back
         with open(self.log_file, "w") as f:
             json.dump(logs, f, indent=2)
