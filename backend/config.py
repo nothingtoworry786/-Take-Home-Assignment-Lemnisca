@@ -13,7 +13,7 @@ if _env_path.exists():
 
 class Config:
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "").strip()
-    Groq_url: str = os.getenv("GROQ_URL")
+    GROQ_URL: str = os.getenv("GROQ_URL", "").strip()
     SMALL_MODEL: str = "llama-3.1-8b-instant"
     BIG_MODEL: str = "llama-3.3-70b-versatile"
     TOP_K: int = 10
