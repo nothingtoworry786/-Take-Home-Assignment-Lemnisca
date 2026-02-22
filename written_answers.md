@@ -74,3 +74,12 @@ Shipping with rule-based/keyword solutions enables fast prototyping, cost contro
 **Fix, given more time:**  
 Integrate a small transformer or bi-encoder-based semantic retriever, or at least a neural re-ranker, to better handle ambiguity and query intent. Alternatively, invest in a more sophisticated, possibly statistical, query classifier for the router.
 
+** prompts **
+
+- *"Read the backend file and update the frontend file"* — to connect the Next.js UI to the `/query` API and show answer, metadata, and sources.
+- *"Make the frontend like how I chat GPT"* — to turn the page into a chat-style UI with user/assistant bubbles, conversation history, and fixed bottom input.
+- *"Add stream to this"* — to add streaming (SSE) on the backend and consume it on the frontend so the answer appears token-by-token.
+- *"Is the error handling happening properly?"* — to add backend stream error events and frontend handling for errors and interrupted streams.
+- *"In the frontend add health endpoint where it will request the backend every 5 sec for one min"* — to add health polling and the status indicator in the header.
+
+
