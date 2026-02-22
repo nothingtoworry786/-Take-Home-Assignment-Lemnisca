@@ -19,4 +19,4 @@ class Config:
     TOP_K: int = 10
     CHUNK_SIZE: int = 600
     CHUNK_OVERLAP: int = 100
-    PORT: int = os.getenv("PORT", 8000)
+    PORT: int = int(os.getenv("PORT", "8000"))

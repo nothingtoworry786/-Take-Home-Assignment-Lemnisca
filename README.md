@@ -225,7 +225,8 @@ This project is set up to deploy **backend on Render** and **frontend on Vercel*
 | `GROQ_API_KEY is not set` | Create a `.env` file in the **project root** with `GROQ_API_KEY=gsk_...`. |
 | `can't open file '...scripts/run_eval.py'` | Run from the project root: `python scripts/run_eval.py`, or from `backend/`: `python ../scripts/run_eval.py`. |
 | Connection refused to backend | Start the backend first (`cd backend && uvicorn main:app --host 0.0.0.0 --port 8000`). |
-| CORS errors in browser | Backend allows `http://localhost:3000` and `http://127.0.0.1:3000`; if using another origin, add it in `backend/main.py` CORS config. |
+| CORS errors in browser | Backend allows `http://localhost:3000` and `http://127.0.0.1:3000`; if using another origin, add it in `backend/main.py` CORS config or set `CORS_ORIGINS` (e.g. on Render). |
+| **Render: “No open ports detected”** | Use Start Command `cd backend && python main.py`. The app reads `PORT` from the environment (Render sets it). Do not hardcode `--port 8000`. |
 | Routing logs not found | Ensure `backend/logs/` exists; the logger creates it on first write. |
 
 ---
