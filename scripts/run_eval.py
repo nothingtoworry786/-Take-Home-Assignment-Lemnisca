@@ -26,6 +26,7 @@ REFUSAL_PHRASES = [
     "not related to", "not covered", "contact support", "beyond the scope",
     "don't have information", "no information", "documentation doesn't",
     "not applicable", "outside my", "not part of the",
+    "only answer questions about", "unrelated to clearpath", "not covered in the documentation",
 ]
 
 

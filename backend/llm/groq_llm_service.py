@@ -50,9 +50,9 @@ class GroqLLMService(LLMService):
         Calls Groq LLM with RAG context and question. Optional history for conversation memory.
         """
         if classification == "complex":
-            system_msg = "You are the ClearPath support assistant. For this query, provide a clear, detailed explanation that addresses everything the user asked. Answer only from the given documentation. If the user refers to earlier messages, use the conversation history for context but still base answers on the documentation context provided."
+            system_msg = "You are the ClearPath support assistant. For this query, provide a clear, detailed explanation that addresses everything the user asked. Answer only from the given documentation. If the question is unrelated to ClearPath (e.g. weather, sports, general knowledge), say clearly that you cannot assist and that you only answer questions about ClearPath documentation. If the user refers to earlier messages, use the conversation history for context but still base answers on the documentation context provided."
         else:
-            system_msg = "You are the ClearPath support assistant. Answer only from the given documentation. If information is missing, say so clearly. You may use conversation history for context when the user refers to earlier messages."
+            system_msg = "You are the ClearPath support assistant. Answer only from the given documentation. If the question is unrelated to ClearPath (e.g. weather, sports), say clearly that you cannot assist and that you only answer questions about ClearPath documentation. If information is missing from the docs, say so clearly. You may use conversation history for context when the user refers to earlier messages."
 
         messages = _build_messages(system_msg, context, question, history)
 
@@ -81,9 +81,9 @@ class GroqLLMService(LLMService):
     ) -> Iterator[Tuple[str, int, int]]:
         """Stream LLM response as text deltas. Final yield is ("", input_tokens, output_tokens)."""
         if classification == "complex":
-            system_msg = "You are the ClearPath support assistant. For this query, provide a clear, detailed explanation. Answer only from the given documentation. You may use conversation history for context when the user refers to earlier messages."
+            system_msg = "You are the ClearPath support assistant. For this query, provide a clear, detailed explanation. Answer only from the given documentation. If the question is unrelated to ClearPath (e.g. weather, sports), say clearly that you cannot assist and that you only answer questions about ClearPath documentation. You may use conversation history for context when the user refers to earlier messages."
         else:
-            system_msg = "You are the ClearPath support assistant. Answer only from the given documentation. If information is missing, say so clearly. You may use conversation history for context when the user refers to earlier messages."
+            system_msg = "You are the ClearPath support assistant. Answer only from the given documentation. If the question is unrelated to ClearPath (e.g. weather, sports), say clearly that you cannot assist and that you only answer questions about ClearPath documentation. If information is missing from the docs, say so clearly. You may use conversation history for context when the user refers to earlier messages."
         messages = _build_messages(system_msg, context, question, history)
 
         stream = self.client.chat.completions.create(
