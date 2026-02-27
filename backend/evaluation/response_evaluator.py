@@ -1,7 +1,6 @@
 from typing import List, Dict
 from evaluation.evaluator_interface import Evaluator
 
-
 class ResponseEvaluator(Evaluator):
     """
     Evaluates LLM responses and flags potential issues.
@@ -9,7 +8,6 @@ class ResponseEvaluator(Evaluator):
 
     # Minimum relevance score; if all chunks are below this, treat as no useful context
     LOW_RELEVANCE_THRESHOLD = 0.35
-
     REFUSAL_PHRASES = [
         "i cannot",
         "i don't know",
@@ -26,9 +24,7 @@ class ResponseEvaluator(Evaluator):
     ) -> List[str]:
 
         flags = []
-
         answer_lower = answer.lower()
-
 
         if len(retrieved_chunks) == 0 and not any(
             phrase in answer_lower for phrase in self.REFUSAL_PHRASES
@@ -43,14 +39,10 @@ class ResponseEvaluator(Evaluator):
                 phrase in answer_lower for phrase in self.REFUSAL_PHRASES
             ):
                 flags.append("no_context")
-
-
         if any(phrase in answer_lower for phrase in self.REFUSAL_PHRASES):
             flags.append("refusal")
-
         if "price" in answer_lower or "pricing" in answer_lower:
             distinct_docs = {c.get("document") for c in retrieved_chunks if c.get("document")}
             if len(distinct_docs) > 1:
                 flags.append("multiple_conflicting_sources")
-
         return flags
